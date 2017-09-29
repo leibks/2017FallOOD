@@ -1,0 +1,62 @@
+// Assignment 10 part 2
+// lei bowen
+// bowenleis
+// Zhu Xiang
+// zhuxiang
+
+
+//Welcome to Maze game, a singular player should use the keys to select
+//the next move and cannot move when face the walls (lines) or boundaries of 
+//the whole maze. You will start from the starting point that displaced in
+//the top left hand corner, and will win the game when you move to the 
+//ending point in the lower right corner. 
+
+//all below things happened when the game runs
+
+//when you press "d", the game will automatically use the Depth-First Search
+//to animate the process of searching the whole maze until the ending point //for you. If you press it again, this search will stop and disappear until
+//next time your press it.
+
+//when you press "b", the game will automatically use the Breadth-First Search 
+//to animate the process of searching the whole maze until the ending point //for you. If you press it again, this search will stop and disappear until
+//next time your press it.
+
+//when you press "c", the maze will reset the whole maze to form another 
+//new common random maze
+
+//when you press "h", the maze will reset the whole maze to form another 
+//new horizontal random maze
+
+//when you press "r", the maze will reset the whole maze to form another 
+//new vertical random maze
+
+//when you press "v", the game will show cells that player have achieved. 
+//If you press it again, it will be hidden. 
+
+//when the player or two searches way to achieve the ending point, the 
+//maze will displace the solution path connecting with start and end. 
+
+//everytime, when you press "c", "h", or "r", you can
+//start a new maze without restarting the program.
+
+//not only we can animate the solution of the maze, but also we can animate 
+//the construction of the maze,on each tick,it can show a single wall being //knocked down.
+
+//three red lines will show keep the scores of wrong moves for either //automatic solutions or manual ones
+
+// ~*~*~*~* CONTROLS *~*~*~*~
+// LEFT_ARROW:     move left
+// RIGHT_ARROW:    move right
+// UP_ARROW:       move up
+// DOWN_ARROW:     move down
+// D:              show the depth-first search
+// B:              show the breadth-first search
+// C:              reset the common maze
+// H:              reset the horizontal  maze
+// R:              reset the vertical maze
+// V:              view the player visiting path
+
+
+
+
+
