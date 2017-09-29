@@ -1,0 +1,444 @@
+// Assignment 6, problem 3
+// lindsay aaron
+// aaronlindsay
+// lei bowen
+// bowenleis
+
+SOKOBAN DESIGN:
+
+INTERFACES:
+// represents lists, useful for multiple instances of a single class in the game
+interface IList<T>
+
+Template:
+Methods:
+This.canPush (Player, String)     ��boolean
+This.move(Player, String)         ��IList<T>
+This.showImage()                  ��WorldImage
+This.allTargetsHit()              ��boolean
+This.changeHit(IList<Target>)     ��IList<T>
+This.hitBox(Box)                  ...Box
+
+
+	Methods:
+	// determine if any T in this list can be pushed by the player
+	// for Box case, true if box can be pushed according to 
+	// appropriate positions and direction
+	// for Block case, true if the block is not in the way of the
+	// player��s attempted move
+	boolean canPush(Player, String)
+
+	// adjust the positions of the Ts in this list appropriately
+	// after a successful player move
+	IList<T> move(Player, String)
+
+	// display these Ts according to their positions, types,
+	// and boxes covered or not situations 
+	WorldImage showImage();
+
+	// determine if all of the given T are on the suitable
+	// target
+	boolean allTargetsHit();
+
+	// adjust the list of T according to given list of target 
+	IList<T> changeHit(IList< Target >);
+
+	// if any list of T(target) can change the given box, change it
+	// if not,remain it.
+	Box hitBox(Box);
+
+
+
+CLASSES:
+// represents an empty list
+class MtList<T> implements IList<T>
+
+Template:
+Methods:
+This.canPush (Player, String)     ��boolean
+This.move(Player, String)         ��IList<T>
+This.showImage()                  ��WorldImage
+This.allTargetsHit() 		  ��boolean
+This.changeHit(IList<Target>)     ��IList<T>
+This.hitBox(Box)                  ...Box
+
+
+
+	Methods:
+	// nothing to push in an empty list
+	boolean canPush(Player, String)
+
+	// nothing to move in an empty list
+	IList<T> move(Player, String)
+
+	// display the background image, nothing else to
+	// display on top in an empty list
+	WorldImage showImage();
+
+	// true because there are no Ts off target
+	// base case must be true
+	boolean allTargetsHit();
+
+	// return MtList<T> directly, 
+	// because there is not T needed to be changes
+	IList<T> changeHit(IList< Target >);
+
+	// there is not suitable T to change Box, remain Box
+	Box hitBox(Box);
+
+
+
+// represents a non-empty list
+class ConsList<T> implements IList<T>
+
+Template:
+Methods:
+This.canPush (Player, String)     ��boolean
+This.move(Player, String)         ��IList<T>
+This.showImage()                  ��WorldImage
+This.allTargetsHit()              ��boolean
+This.changeHit(IList<Target>)     ��IList<T>
+This.hitBox(Box)                  ...Box
+
+
+
+	Fields:
+	This.first         ��T
+	This.rest          ��IList<T>
+	
+
+	Methods:
+	// determine if any T in this list can be pushed by the player
+	// for Box case, true if box can be pushed according to 
+	// appropriate positions and direction
+	// for Block case, true if the block is not in the way of the
+	// player��s attempted move
+	boolean canPush(Player, String)
+
+	// adjust the positions of the Ts in this list appropriately
+	// after a successful player move
+	IList<T> move(Player, String)
+
+	// display these Ts according to their positions, types, and 
+	// boxes covered or not situations
+	WorldImage showImage();
+
+	// determine if any T in this Cons list is not on top of suitable target
+	/* Utilized methods:
+	// This.first.hit()            ...boolean
+	// This.rest.allTargetsHit()   ...boolean
+	*/
+	boolean allTargetsHit();
+
+	// adjust the list of T according to given list of target
+	// for box: change field this.onHit from false to true
+	// if this box fit any target 
+	/* Utilized methods:
+	// This.first.changeHit((IList<Target)  ...T
+	// This.rest.changeHit(IList<Target)    ...IList<T>
+	*/
+	IList<T> changeHit(IList< Target >);
+
+	// if any Cons list of T(target) can change the given box field this.onHit
+	//  change it, if not,remain it.
+	/* Utilized methods:
+	// This.first.hitBox(Box)               ...boolean
+	// This.rest.hitBox(Box)                ...Box
+	*/
+	Box hitBox(Box);
+
+
+// represents one block of the wall
+class Block
+
+Template:
+Fields:
+this.posn��                     ��Posn
+
+Methods:
+This.showImage()               ��WorldImage
+This.canPush(Player, String)   ��boolean
+
+
+	Fields:
+	// represents the position of this Block
+	- Posn posn;
+
+
+	Methods:
+	// display this block according to its position
+	WorldImage showImage();
+
+	// return false if the given player is attempting to move
+	// to the position of this block
+	boolean canPush(Player, String);
+
+
+
+// represents a box
+class Box
+
+Template:
+Fields:
+this.posn��                     ��Posn
+this.type��                     ��String
+this.onHit��                    ��boolean
+
+
+Methods:
+This.showImage()               ��WorldImage
+This.canPush(Player, String)   ��boolean
+This.move(Player, String)      ��Box
+This.hit()                     ��boolean
+This.changeHit(IList<Target>)  ��Box
+
+
+
+	Fields:
+	// represents the position of this Box
+	- Posn posn;
+
+ 	// represent the types (colors) for this box 
+	// for modern levels
+	- String type;
+
+	// show if this box is on the suitable target
+	- boolean onHit;
+
+	Methods:
+	// display this box according to its current position and type
+	// and whether or not it is currently on top of a target (basing on onHit)
+        WorldImage showImage()
+
+     	// determine if this box can be pushed by the player,
+	// considers the positions of the box and the player and
+	// given direction
+	boolean canPush(Player, String);
+
+	// if the position of this box is the same as that of the
+	// player after it moves, move this box in the given direction
+	Box move(Player, String);
+
+	// check if this box field this.onHit is true, that means this box is on 
+	// correct target
+	boolean hit();
+
+	// adjust the box (onHit field) according if or not on the 
+	// correct target
+	/* Utilized methods:
+	   that.hitBox(this)      ...Box
+	*/
+	Box changeHit(IList<Target> that)
+
+
+// represents a final destination for a box
+class Target
+
+Template:
+Fields:
+this.posn��                     ��Posn
+this.type��                     ��String
+
+Methods:
+This.showImage()               ��WorldImage
+This.hitBox(Box)              ��boolean
+
+	Fields:
+	// represents the position of this Target
+	- Posn posn;
+
+	// represent the types (colors) for this target
+	// for modern levels
+	-String type;
+
+
+	Methods:
+	// display the image for this target according to its position and type
+	// and whether or not it is currently covered by box
+	WorldImage showImage();
+
+	// determine if this target has same position and types 
+	// with the given box
+	Boolean hitBox(Box);
+
+
+
+// represents the player
+class Player
+
+Template:
+Fields:
+this.Posn��                       ��Posn
+this.type��                       ��WorldImage
+
+Methods:
+This.showImage()                 ��WorldImage
+This.move(String)��              ��Player
+This.canMove(Warehouse, String)  ��boolean
+This.pickType()                  ��WorldImage
+This.pickPosn()                  ��Posn  
+
+
+	Fields:
+	// represents the position of this Player
+	- Posn p;
+	// represents the player type (picture for the player)
+	- WorldImage type;
+
+
+	Methods:
+	// display the player according to its current position, and show its
+	// image according to type
+	WorldImage showImage()
+
+	// move the player on key-press if the player can move
+	Player move(String);
+
+	// determine if there is any block or box in the way of
+	// the player in the attempted move direction
+	boolean canMove(Warehouse,  String);
+
+	// pick up the type in this player
+	WorldImage pickType();
+
+	// pick up the position in this player
+	Posn pickPosn();
+
+// represents a position
+class Posn
+
+Template:
+this.x                       ...int
+this.y                       ...int
+
+
+	Fields:
+	// represents the position value along the x axis, increasing moves right
+	- int x;
+	// represents the position value along the y axis, increasing moves down
+	- int y;
+
+
+
+// represents the world of the game
+class Warehouse extends World
+
+Template:
+Fields:
+this.player��                ��Player
+this.player2��               ��Player
+This.boxes ��                ��IList<Box>
+This.wall��                  ��IList<Block>
+This.targets��               ��IList<Target>
+This.lastStep��              ��Warehouse
+
+
+
+Methods:
+This.makeScene()           ��WorldScene
+This.onKeyEvent(String)    ��World
+This.playerCanMove(String) ��boolean
+This.worldEnds()           ��WorldEnd
+
+
+Methods for fields
+This.player.showImage()                ��WorldImage
+This.boxes.showImages()                ��WorldImage
+This.wall.showImages()                 ��WorldImage
+This.targets.showImages()              ��WorldImage
+
+This.player2.pickType                  ��WorldImage
+This.player.pickPosn                   ��Posn
+This.player.move(String)               ��Player
+This.boxes.move(Player, String)        ��IList<Box>
+
+This.boxes.canPush(Player, String)     ��boolean
+This.wall.canPush(Player, String)      ��boolean
+This.player.canMove(Warehouse, String) ��boolean
+
+This.boxes.changeHit(IList<Target>)    ��IList<Box>
+
+This.boxes.allTargetsHit()             ��boolean
+
+
+	Fields:
+	// represents the Original Player, every method will use this first
+	// Player, and another player just exist but there is not method
+	// will use it
+	- Player player;
+	// represent another Player for switching
+	- Player player2;
+	// represents the Walls of the Warehouse
+	- IList<WallBlock> wall;
+	// represents the Boxes
+	- IList<Box> boxes;
+	// represents the Targets
+	- IList<Target> targets;
+	// represent the last step(world) of the game
+	- Warehouse lastStep;
+
+
+	Methods:
+	// display the first player, boxes, wall, and targets according to
+	// their positions, if the box and target on the same position,
+	// the box on the top of target and show differences. This method
+	// will show the shape of the warehouse by displaying these things
+	// one by one in the image of world
+        /* Utilized methods:
+	   This.player.showImage()                ��WorldImage
+	   This.boxes.showImages()                ��WorldImage
+	   This.wall.showImages()                 ��WorldImage
+	   This.targets.showImages()              ��WorldImage  
+	*/
+	WorldScene makeScene();
+
+	// If I press the U and it will return the saved last step world
+	// in the field, --- undo funciton
+	// If I press the R for reset the game, it will return the original
+	// world directly, because I will design an original game world as a
+	// constant in this world
+	// If I press the E for swapping players and it will return a new World
+        // that just change current player to the player2, remain position and
+	// change the type (eg: new Player(this.player2.pickType, this.player.pickPosn))
+	// If I pressed the arrow keys for movement,
+	// after making sure our player can move by playerCanMove method, 
+	// we saved the current world to the lastStep field, then move 
+	// the player and boxes according to their current positions 
+	// and the given key-press, and change boolean fields in 
+	// boxes if any box was moved on the top of target
+	// If the attempted move is invalid, do nothing
+	/* Utilized methods:
+	   This.player2.pickType                  ��WorldImage
+	   This.player.pickPosn                   ��Posn
+	   This.playerCanMove(String)             ��boolean
+	   This.player.move(String)               ��Player
+	   This.boxes.move(Player, String)        ��IList<Box>
+           This.boxes.changeHit(IList<Target>)                ��IList<Box>
+	*/
+	World onKeyEvent(String)
+
+	// determine if the player can move based on its position
+	// and the positions of walls and boxes, player cannot push
+	// two or more boxes at once, cannot push a box into a wall,
+	// and cannot move into a wall. Otherwise, the player can move.
+	// First situation:
+	// check if there is a box can be pushed,  (boxes.canPsuh)
+	// check if there is another box or block next to this pushed box
+	// (boxes.canPush(this.player.move) + wall.canPush(this.player.move)
+	// --- see if after palyer move, there is still a box or block
+	// first check is true and second is false, this situation is true
+	// Second situation:
+	// there is no box or block on the way player attempt to move(player.canMove)
+	// either of two situatiosn is true, return true
+	/* Utilized methods:
+	   This.boxes.canPush(Player, String)     ��boolean
+	   This.wall.canPush(Player, String)      ��boolean
+	   This.player.canMove(Warehouse, String) ��boolean
+	*/
+	boolean playerCanMove(String)
+
+	// end the game if all of the targets are covered by boxes
+	/* Utilized methods:
+	   This.boxes.allTargetsHit() ��boolean
+	WorldEnd worldEnds()
+
