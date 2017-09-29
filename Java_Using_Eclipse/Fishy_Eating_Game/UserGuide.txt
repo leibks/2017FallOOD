@@ -1,0 +1,26 @@
+// ~*~*~*~* AQUARIUM *~*~*~*~
+
+// Welcome to Aquarium, a fun,
+// single-player campaign in
+// which the player adventures
+// to the top of the food
+// chain. Become the apex
+// predator your mother always
+// knew you could be!
+
+// Consume fish smaller than
+// yourself in order to grow
+// and gain points. You win if
+// you can become the largest
+// fish in the pond! However,
+// take care to avoid being
+// eaten yourself -
+// . . . . if you are . . . .
+//         GAME OVER!
+
+// ~*~*~*~* CONTROLS *~*~*~*~
+// LEFT_ARROW:     move left
+// RIGHT_ARROW:    move right
+// UP_ARROW:       move up
+// DOWN_ARROW:     move down
+// X:              end game

@@ -1,0 +1,41 @@
+// PROGRAM DESIGN
+
+// INTERFACES \ IMPLEMENTING CLASSES:
+// - ILoSwimmer \        represents a list of Swimmers
+//
+//   - MtLoSwimmer       empty
+//     (no fields)
+//
+//   - ConsLoSwimmer     nonempty
+//     ASwimmer first;
+//     ILoSwimmer rest;
+
+// ABSTRACT CLASSES \ EXTENDING CLASSES:
+// - ASwimmer \          represents a Swimmer in the Pond
+//   Posn posn;
+//   Vel vel;
+//   int size;
+//   Color col;
+//
+//   - Player            represents the Player
+//
+//   - Fish              represents a Fish in the Pond
+
+// CLASSES:
+// - Posn                represents Position
+//   int x;
+//   int y;
+//
+// - Vel                 represents Velocity
+//   int dx;
+//   int dy;
+//
+// - Sound               represents Sound for playback
+//   boolean isPlaying;
+//   Clip clip;          
+//
+// - Pond                extends the World in which the game exists
+//   Player player;
+//   ILoSwimmer fishies;
+//
+// - PondExamples        represents examples of Pond-related data
