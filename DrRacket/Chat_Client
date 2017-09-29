@@ -1,0 +1,548 @@
+;;Exercise 1
+
+; We saw Ben Greenman for feedback
+
+;----------------------------PURPOSE STATEMENT----------------------------------
+; This world program connects to a server
+; that sends out messages and other commends
+;and then receive messages from the server or display the results of commends.
+
+; Convention for code command
+; code command is a command the user ordered to send images
+; sign "^" is needed to add before the code command 
+; example1:  ^(above ((circle 30 "soild" "red") "yes"))
+; example2:  ^(beside ((circle 30 "soild" "red") "yes"))
+; example3:  ^(circle 30 "soild" "red")
+; example3:  ^(rectangle 30 40 "soild" "red")
+; example3:  ^"hello"
+
+;Convention for blacklist command
+;blacklist command is a command the user ordered to  make a blacklist
+;and add persons inside.
+;messages from every person in the blacklist would be blocked
+;Note: the name of person must be in the chat server
+;sign "-" is needed to add before the blacklist command
+;example: "-caoyu"
+
+;Convention for color command
+;color command is a command the user ordered to change the color of the texts
+;sign "@" is needed to add before the color command
+;example: "@red"
+
+;Convention for whitelist command
+;whitelist command is a command the user ordered to make a whitelist
+;and add persons inside.
+;every person in the whitelist is able to send us URLs
+;Note: the name of person must be in the chat server
+;sign "!" is needed to add before the whitelist command
+;example: "!user"
+
+;Convention for URL command
+;URL command is a command the user ordered to show the images in the URL
+;the user could give a string and a URL in the order so that
+;the program would replace the given string as the image in the URL
+;sign "#" is needed to add before the string the user giving in URL command
+;sign "*" is needed to add before the URL the user giving the URL command
+;example: "#word*http://simpleicon.com/wp-content/uploads/smile.png"
+
+; DEPENDENCIES
+(require 2htdp/universe)
+(require 2htdp/image)
+(require string-sexpr)
+
+;;----------------------------DATA DEFINITION-----------------------------------
+;;A [List-of X] is one of:
+;; --'()
+;; (cons X [List-of X])
+
+(define-struct website [word web])
+;;A webiste is (make-website String String)
+;;Interpretation:
+;;word is the word we want
+;;to transfer to image
+;;web is the URL of the image
+;;of the transfer word 
+(define WEBSITE1
+  (make-website "word" "http://simpleicon.com/wp-content/uploads/smile.png"))
+(define WEBSITE2
+  (make-website "hello"
+                "http://image.flaticon.com/icons/png/128/42/42829.png"  ))
+(define WEBSITE3
+  (make-website "tank"
+                "http://www.freeiconspng.com/uploads/tank-icon-8.jpg"  ))
+
+;;A Command is one of :
+;; -- String
+;; -- (list "COLOR" String)
+;; -- (list "BLACKLIST" String)
+;; -- (list "WHITELIST" String)
+;; -- (list "URL" String String)
+;; -- (list "CODE" PD*)
+(define COLOR1 (list "COLOR" "RED"  ))
+(define BLACKLIST1 (list "BLACKLIST" "caoyu"  ))
+(define WHITELIST1 (list "WHITELIST" "user"  ))
+(define URL1 (list "URL" "word"
+                   "http://simpleicon.com/wp-content/uploads/smile.png"  ))
+(define CODE1 (list "CODE" (list 'circle 10 "solid" "red") ))
+(define CODE2 (list "CODE" (list 'rectangle 10 20 "solid" "red")))
+(define CODE3 (list "CODE" (list 'empty-image)))
+(define CODE4 (list "CODE"  "nope" ))
+(define CODE5 (list "CODE"
+                    (list 'beside
+                          (list "hello"
+                                '(rectangle 10 20 "solid" "red") "world") )))
+(define CODE6 (list "CODE"
+                    (list 'above (list '(rectangle 10 20 "solid" "red")) )))
+
+;;A Chat is one of :
+;; -- (list "MSG" String [List-of String] String)
+;; -- (list "JOIN" String)
+;; -- (list "EXIT" String)
+;; -- (list "ERROR" String)
+;; -- (list "EMOTICON" String String String)
+;; -- (list "CODE" String PD*)
+(define CHAT1 (list "MSG" "lei" (list "hello" "fine") "red"))
+(define CHAT2 (list "JOIN" "lei"))
+(define CHAT3 (list "EXIT" "lei"))
+(define CHAT4 (list "ERROR" "lei"))
+(define CHAT5 (list "MSG" "lei" (list "hello" "fine" "word") "red"))
+(define CHAT6 (list "EMOTICON" "username" "word"
+                    "http://simpleicon.com/wp-content/uploads/smile.png"))
+(define CHAT7
+  (list "CODE" "lei"
+        '(beside ("hello" (rectangle 10 20 "solid" "red") "world"))))
+(define CHAT8
+  (list "CODE" "lei" '(circle 10 "solid" "red")))
+(define CHAT9
+  (list "CODE" "lei" '(rectangle 10 20 "solid" "red")))
+(define CHAT10
+  (list "CODE" "lei"
+        '(above ((rectangle 10 20 "solid" "red")))))
+(define CHAT11
+  (list "CODE" "lei" "nope"))
+
+;;A Information is one of:
+;; --String
+;; --[List-of String]
+
+(define-struct client [newinformation old webcons])
+;;A client is (make-client String [List-of Chat] [List-of website]
+;;Interpretation; 
+;;newinformation is the information we input and want to send
+;;old is the history of message sending and receiving
+;;webcons stores the message received from chat client server
+(define CLIENT1 (make-client "" '() '()))
+(define CLIENT2
+  (make-client "who are you"
+               (list (list "MSG" "lei" (list "hello" "fine") "red"))
+               '()))
+(define CLIENT3
+  (make-client "who are you?" 
+               (list (list "MSG" "lei" (list "hello" "fine") "red"))
+               (list WEBSITE1)))
+(define CLIENT4
+  (make-client "who are you"
+               (list (list "MSG" "lei" (list "hello" "fine") "red"))
+               (list WEBSITE1)))
+(define CLIENT5 (make-client "who are you"
+                             (list (list "JOIN" "lei"))
+                             '()))
+(define CLIENT6 (make-client "who are you"
+                             (list (list "EXIT" "lei"))
+                             '()))
+(define CLIENT7 (make-client "who are you"
+                             (list (list "ERROR" "lei"))
+                             '()))
+
+; A PD* (short for picture description) is one of:
+; – 'empty-image 
+; – String 
+; – (list 'circle Number String String)
+; – (list 'rectangle Number Number String String)
+; – (list 'beside LPD*)
+; – (list 'above LPD*)
+; 
+; An LPD* is one of: 
+; – '()
+; – (cons PD* LPD*)
+
+;;------------------------CONSTANT----------------------------------------------
+(define EMPTY 'empty-image)
+(define CIRCLE1 (list 'circle 10 "solid" "red"))
+(define RECTANGLE1 (list 'rectangle 20 20 "solid" "yellow"))
+(define ABOVE1 (list 'above
+                     (cons CIRCLE1 (cons CIRCLE1 (cons RECTANGLE1 '())))))
+(define ABOVE2 (list 'above '()))
+(define BESIDE1 (list 'beside
+                      (cons CIRCLE1 (cons CIRCLE1 (cons RECTANGLE1 '())))))
+(define BESIDE2 (list 'beside '()))
+(define WORD "hello word")
+(define THE-SERVER "dictionary.ccs.neu.edu")
+(define THE-PORT 10001) 
+(define BACKGROUND (empty-scene 1000 600))
+(define POSITION (list (make-posn 400 400) (make-posn 20 500)))
+;;the position of the image of newinformation and historical information
+;;on the background
+(define NOTHING (empty-scene 0 0))
+
+;;--------------------------MAIN FUNCTION--------------------------------------
+;;communicate: Client -> Client
+;;Send messgae to the server,receive messages from the server, and display them
+(define (communicate s)
+  (big-bang s
+            [name "yu.zhey:0819+lei.b:3665"]
+            [register THE-SERVER]
+            [port THE-PORT]
+            [to-draw show-word]
+            [on-key add-words]
+            [on-receive receive-word])) 
+
+;;show-word: Client -> Image
+;;transfer the messages to images and put these images on the BACKGROUND
+;;at x-coordinate and y-coordinate
+(check-expect (show-word CLIENT2)
+              (place-images/align
+               (list (combine
+                      (list (list "MSG" "lei" (list "hello" "fine") "red"))
+                      '())
+                     (text "who are you" 30 "black"))
+               POSITION "left" "center" BACKGROUND))
+(check-expect (show-word CLIENT3)
+              (place-images/align 
+               (list (combine
+                      (list (list "MSG" "lei" (list "hello" "fine") "red"))
+                      (list WEBSITE1)) 
+                     (text "who are you?" 30 "black")) 
+               POSITION "left" "center" BACKGROUND))
+(check-expect (show-word CLIENT5)
+              (place-images/align 
+               (list (combine (list CHAT2) '())                  
+                     (text "who are you" 30 "black")) 
+               POSITION "left" "center" BACKGROUND))
+(check-expect (show-word CLIENT6)
+              (place-images/align 
+               (list (combine (list CHAT3) '())                  
+                     (text "who are you" 30 "black")) 
+               POSITION "left" "center" BACKGROUND))
+(check-expect (show-word CLIENT7)
+              (place-images/align 
+               (list (combine (list CHAT4) '())                  
+                     (text "who are you" 30 "black")) 
+               POSITION "left" "center" BACKGROUND))
+(define (show-word s-client)
+  (place-images/align
+   (list (combine (client-old s-client) (client-webcons s-client))
+         (text (client-newinformation s-client) 30 "black"))
+   POSITION "left" "center" BACKGROUND))
+
+;;Client KeyEvent -> Client or (Package)
+;;add words, delete word, and send messages
+;;special keyevent are: 
+;;if the 1String is "\b", then delete the last letter
+;;the user type
+;;if the 1String is "\r", then send the message to the server
+(check-expect (add-words CLIENT2 "\b")
+              (make-client "who are yo"
+                           (list
+                            (list "MSG" "lei"
+                                  (list "hello" "fine") "red"))'()))
+(check-expect (add-words CLIENT2 "\r")
+              (send-information CLIENT2))
+(check-expect (add-words CLIENT2 "d")
+              (make-client "who are youd"
+                           (list
+                            (list "MSG" "lei"
+                                  (list "hello" "fine") "red"))'()))
+(check-expect (add-words (make-client "" (list "and" "oh")'()) "\b")
+              (make-client "" (list "and" "oh")'()))
+(check-expect (add-words (make-client "" (list "hello" "fine")'()) "\r")
+              (make-client "" (list "hello" "fine")'())) 
+(define (add-words s-client s) 
+  (cond     
+    [(and (key=? "\b" s)
+          (> (string-length (client-newinformation s-client)) 0))
+     (make-client (substring
+                   (client-newinformation s-client)
+                   0 (- (string-length (client-newinformation s-client)) 1))
+                  (client-old s-client) (client-webcons s-client))]
+    [(key=? "\b" s) s-client]
+    [(key=? "\r" s)
+     (if (> (string-length(client-newinformation s-client)) 0)
+         (send-information s-client)
+         (make-client "" (client-old s-client) (client-webcons s-client)))]
+    [(= (string-length s) 1)
+     (make-client
+      (string-append (client-newinformation s-client) s)
+      (client-old s-client) (client-webcons s-client))]
+    [else s-client]))
+
+;;send-information: Client -> Package 
+;;Send message to chat server, leave the blank for new information
+;;and (clear the sending message)
+(check-expect (send-information (make-client "-caoyu"  '() '()))
+              (make-package (make-client "" '() '() ) BLACKLIST1))
+(check-expect (send-information (make-client "@RED"  '() '()))
+              (make-package (make-client "" '() '() ) COLOR1))
+(check-expect (send-information (make-client "!user"  '() '()))
+              (make-package (make-client "" '() '() ) WHITELIST1))
+(check-expect
+ (send-information
+  (make-client
+   "#word*http://simpleicon.com/wp-content/uploads/smile.png"  '() '()))
+ (make-package (make-client "" '() '() ) URL1))
+(check-expect (send-information (make-client "hello" '() '() ))
+              (make-package (make-client "" '() '() ) "hello"))
+(check-expect (send-information
+               (make-client "^(circle 10 \"solid\" \"red\")" '() '() ))
+              (make-package (make-client "" '() '() ) CODE1))
+(check-expect (send-information
+               (make-client "^(rectangle 10 20 \"solid\" \"red\")" '() '() ))
+              (make-package (make-client "" '() '() ) CODE2))
+(check-expect (send-information
+               (make-client "^\"nope\"" '() '() ))
+              (make-package (make-client "" '() '() ) CODE4))
+(check-expect (send-information
+               (make-client
+                "^(beside (\"hello\" \"world\"))" '() '()))
+              (make-package (make-client ""  '() '() )
+                            (list "CODE"
+                                  (list 'beside (list "hello" "world")))))
+(check-expect (send-information
+               (make-client
+                "^(above ((rectangle 10 20 \"solid\" \"red\")))" '() '() ))
+              (make-package (make-client "" '() '() ) CODE6))
+(define (send-information s-client)
+  (make-package
+   (make-client "" (client-old s-client) (client-webcons s-client))
+   (command (client-newinformation s-client)  )))
+
+;;receive-word: Client Chat -> Client 
+;;Add the receiving message into new client
+(check-expect (receive-word CLIENT1 CHAT1)
+              (make-client "" (list CHAT1) '()))
+(check-expect (receive-word CLIENT2 CHAT6) CLIENT4)
+(define (receive-word s-client receiving)
+  (cond
+    [(string=? "EMOTICON" (first receiving)) 
+     (make-client
+      (client-newinformation s-client)
+      (client-old s-client)
+      (cons (make-website
+             (third receiving)
+             (fourth receiving)) (client-webcons s-client)))]
+    [else (make-client (client-newinformation s-client)
+                       (cons  receiving (client-old s-client))
+                       (client-webcons s-client) ) ]))  
+
+;---------------------------HELPER FUNCTION-------------------------------------
+;;combine: [List-of Chat] [List-of website] -> Image
+;;Combine the historical list-of-Strings
+;;form a image and transfer the specific word in them
+;;to the image from webcons I want to see
+(check-expect (combine (list CHAT1 CHAT2) '())
+              (above/align "left" (special CHAT2 '()) (special CHAT1 '())))
+(check-expect (combine (list CHAT1 CHAT2) (list WEBSITE1))
+              (above/align "left" (special CHAT2 (list WEBSITE1))
+                           (special CHAT1 (list WEBSITE1) )))
+(define (combine old web)  
+  (local (;;call-special: Chat Image -> Image
+          ;;above the image according to given chat
+          ;; on the base image
+          (define (call-special chat image)
+            (above/align "left"
+                         image (special chat web) )))             
+    (foldr call-special empty-image old)))
+
+;; special: Chat [List-of website] -> Image
+;; transfer every Chat to the image
+(check-expect (special CHAT1 '()) (helper-msg CHAT1 '()))
+(check-expect (special CHAT1 (list WEBSITE1))
+              (helper-msg CHAT1 (list WEBSITE1)))
+(check-expect (special CHAT7 '()) (helper-code CHAT7 ))
+(check-expect (special CHAT2 '()) (helper-others CHAT2))
+(define  (special chat web)
+  (cond
+    [(string=? (first chat) "MSG") (helper-msg chat web)]
+    [(string=? (first chat) "CODE") (helper-code chat)]
+    [else (helper-others chat)])) 
+
+;;helper-code: Chat -> Image
+;;transfer pd* in CODE Chat to the image
+(check-expect (helper-code CHAT7) 
+              (beside
+               (text "CODE lei" 20 "blue")
+               (pd*-interpret
+                '(beside ("hello" (rectangle 10 20 "solid" "red") "world")))))
+(check-expect (helper-code CHAT8) 
+              (beside
+               (text "CODE lei" 20 "blue")
+               (pd*-interpret   '(circle 10 "solid" "red"))))
+(check-expect (helper-code CHAT9) 
+              (beside
+               (text "CODE lei" 20 "blue")
+               (pd*-interpret '(rectangle 10 20 "solid" "red") )))
+(check-expect (helper-code CHAT10) 
+              (beside
+               (text "CODE lei" 20 "blue")
+               (pd*-interpret 
+                '(above ((rectangle 10 20 "solid" "red"))))))
+(check-expect (helper-code CHAT11) 
+              (beside
+               (text "CODE lei" 20 "blue")
+               (pd*-interpret "nope"  ))) 
+(define (helper-code chat)
+  (beside (text (string-append (first chat) " " (second chat))
+                20 "blue")  (pd*-interpret (third chat))))
+
+;;pd*-interpret: PD* -> Image
+;;transfer the PD* to corresponding image
+(check-expect (pd*-interpret EMPTY) empty-image)
+(check-expect (pd*-interpret WORD) (text WORD 12 "blue"))
+(check-expect (pd*-interpret CIRCLE1) (circle 10 "solid" "red"))
+(check-expect (pd*-interpret RECTANGLE1) (rectangle 20 20 "solid" "yellow"))
+(check-expect (pd*-interpret ABOVE1) .) 
+(check-expect (pd*-interpret ABOVE2) empty-image)
+(check-expect (pd*-interpret BESIDE1).)
+(check-expect (pd*-interpret BESIDE2) empty-image)
+(define (pd*-interpret pd)
+  (local (;lpd : LPD* String -> Image
+          ;creats images according to the given LPD*
+          ;and arranges the images by the given string as a function call
+          (define  (lpd a-lpd a-string)
+            (local (;;connect-image: PD* Image -> Image
+                    ;;apply every image that transfered by
+                    ;;pd*-interpret function
+                    ;;by using given string (drawing picture)
+                    (define (connect-image pd base)
+                      (a-string (pd*-interpret pd) base)))
+              (foldr connect-image empty-image a-lpd))))
+    (cond
+      [(empty-image? pd) empty-image]
+      [(string? pd) (text pd 12 "blue")]
+      [(circle? pd) (circle (circle-radius pd)
+                            (circle-mode pd) (circle-color pd))]               
+      [(rectangle? pd) (rectangle (rectangle-width pd)
+                                  (rectangle-height pd)
+                                  (rectangle-mode pd) (rectangle-color pd))]
+      [(above? pd) (lpd (second pd) above)]
+      [(beside? pd) (lpd (second pd) beside)])))
+
+;-----------------------------HELPER FUNCTION FOR pd*----------------------
+(define (empty-image? i) (symbol? i))
+(define (circle? i) (and (cons? i) (symbol=? (first i) 'circle)))
+(define (rectangle? i) (and (cons? i) (symbol=? (first i) 'rectangle)))
+(define (above? i) (and (cons? i) (symbol=? (first i) 'above)))
+(define (beside? i) (and (cons? i) (symbol=? (first i) 'beside)))
+
+(define circle-radius second)
+(define circle-mode third)
+(define circle-color fourth)
+
+(define rectangle-width second)
+(define rectangle-height third)
+(define rectangle-mode fourth)
+(define rectangle-color fifth)
+;----------------------------------------------------------------------------
+
+;; helper-others: Chat -> Image
+;; just draw the images for JOIN, EXIT, or ERROR Chat
+(check-expect (helper-others CHAT2 )
+              (text "JOIN lei" 20 "blue"))
+(check-expect (helper-others CHAT3 )
+              (text "EXIT lei" 20 "blue"))
+(check-expect (helper-others CHAT4 )
+              (text "ERROR lei" 20 "blue"))
+(define (helper-others chat)
+  (text (string-append (first chat) " " (second chat)) 20 "blue"))
+
+;; helper-msg: Chat [List-of website] -> Image
+;; just draw the images for MSG Chat
+(check-expect (helper-msg CHAT1 '())
+              (beside (text "MSG lei" 20 "red")
+                      (text " hello" 20 "red")
+                      (text " fine" 20 "red")))
+(check-expect (helper-msg CHAT1 (list WEBSITE1))
+              (beside (text "MSG lei" 20 "red")
+                      (text " hello" 20 "red")
+                      (text " fine" 20 "red")))
+(check-expect (helper-msg CHAT5 (list WEBSITE1))
+              (beside
+               (text "MSG lei" 20 "red")
+               (text " hello" 20 "red")
+               (text " fine" 20 "red")
+               (bitmap/url
+                "http://simpleicon.com/wp-content/uploads/smile.png")))
+(check-expect (helper-msg CHAT5 (list WEBSITE1 WEBSITE2))
+              (beside
+               (text "MSG lei" 20 "red")
+               (bitmap/url
+                "http://image.flaticon.com/icons/png/128/42/42829.png")
+               (text " fine" 20 "red")
+               (bitmap/url
+                "http://simpleicon.com/wp-content/uploads/smile.png")))
+(define (helper-msg chat lweb)  
+  (local (;;COLOR: String
+          ;;color of the chat words
+          (define COLOR (fourth chat)) 
+          ;;form-image: String Image -> Image
+          ;;transfer the word we want into image from URL
+          ;;else into the text images
+          (define (form-image s base)
+            (local (;;find: website -> Image
+                    ;;transfer specific word to pointed image
+                    ;;based on given website information
+                    (define (find w base) 
+                      (if (string=? (website-word w) s)
+                          (bitmap/url (website-web w)) base)))
+              (beside (foldr find (text (string-append " " s)
+                                        20 (fourth chat)) lweb) base) )))
+    (beside (text (string-append (first chat) " " (second chat)) 20 COLOR)
+            (foldr form-image empty-image (third chat)))))
+
+;;command: String -> Command
+;;transfer the string the user type into Command
+(check-expect (command "-caoyu") BLACKLIST1)
+(check-expect (command "@RED") COLOR1)
+(check-expect (command "!user") WHITELIST1)
+(check-expect (command "hi") "hi")
+(check-expect
+ (command
+  "#word*http://simpleicon.com/wp-content/uploads/smile.png") URL1)
+(check-expect (command  "^(circle 10 \"solid\" \"red\")") CODE1)            
+(check-expect (command  "^(rectangle 10 20 \"solid\" \"red\")") CODE2)
+(check-expect (command  "^\"nope\"") CODE4)
+(check-expect (command  "^(above ((rectangle 10 20 \"solid\" \"red\")))") CODE6)
+(check-expect 
+ (command "^(beside (\"hello\" (rectangle 10 20 \"solid\" \"red\") \"world\"))")
+ CODE5)
+
+(define (command s)  
+  (cond   
+    [(empty? s) ""]
+    [(string=?  (string-ith s 0) "-")
+     (list "BLACKLIST"  (substring s 1))]
+    [(string=? (string-ith s 0) "@")
+     (list "COLOR" (substring s 1) )]
+    [(string=? (string-ith s 0) "!")
+     (list "WHITELIST"  (substring s 1) )]
+    [(and (string=? (string-ith s 0) "#") (string-contains? "*" s))
+     (cons "URL" (cons (substring s 1 (+ 1 (find (substring s 1))))
+                       (cons (substring s (+ (find (substring s 1)) 2))'())))]
+    [(string=? (string-ith s 0 ) "^") 
+     (list "CODE"  (string->sexpr (substring s 1)))]
+    [else s]))
+
+;;find: String -> Number
+;;find the numerical position aof start in the given string
+(check-expect  (find "asdf*adsf") 4)
+(check-expect  (find "*asdfdadsf") 0)
+
+(define (find s)
+  (if (string=? (string-ith s 0) "*") 0
+      (+ 1 (find (substring s 1)  )) ))
+
+
+
+
+
+
